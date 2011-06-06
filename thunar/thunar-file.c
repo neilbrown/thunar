@@ -50,6 +50,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef HAVE_MAGIC_H
+#include <magic.h>
+#endif
+
 #include <gio/gio.h>
 #include <libxfce4ui/libxfce4ui.h>
 
@@ -138,7 +142,9 @@ static guint              file_signals[LAST_SIGNAL];
 G_DEFINE_TYPE_WITH_CODE (ThunarFile, thunar_file, G_TYPE_OBJECT,
     G_IMPLEMENT_INTERFACE (THUNARX_TYPE_FILE_INFO, thunar_file_info_init))
 
-
+#ifdef HAVE_MAGIC_H
+extern magic_t magic_cookie;
+#endif
 
 #ifdef G_ENABLE_DEBUG
 static gboolean thunar_file_atexit_registered = FALSE;
@@ -2397,7 +2403,43 @@ thunar_file_is_desktop_file (const ThunarFile *file)
     && !g_str_has_suffix (thunar_file_get_basename (file), ".directory");
 }
 
+/**
+ * thunar_image_get_size:
+ * @file : A #ThunarFile of the file to identify.
+ * @width : Return location for the width of the image, or NULL
+ * @height : Return location for the height of the image, or NULL
+ *
+ * adapter for gdk_pixbuf_get_file_info, which parses an file far
+ * enough to determine its size and format.
+ *
+ * return value : A GdkPixbufFormat holding information about the image format
+ * of the file or NULL if the format wasn't recognized.
+ **/
+GdkPixbufFormat *
+thunar_file_get_image_size (const ThunarFile  *file,
+                            gint              *width,
+                            gint              *height)
+{
+  gchar           *absolute_path;
+  GdkPixbufFormat *result = NULL;
 
+  _thunar_return_val_if_fail (THUNAR_IS_FILE (file), NULL);
+  absolute_path = g_file_get_path (thunar_file_get_file (file));
+#ifdef HAVE_MAGIC_H
+  /* use libmagic if avaiable */
+  if(magic_cookie)
+    if(strncmp (magic_file (magic_cookie, absolute_path),
+          "application/xml", strlen ("application/xml")) == 0)
+      return NULL;
+#endif
+  /* Don't use gdk_pixbuf_get_file_info for some vector formats */
+  if(strcmp ("image/svg+xml", thunar_file_get_content_type (file)) == 0)
+    return NULL;
+
+  result = gdk_pixbuf_get_file_info (absolute_path, width, height);
+  g_free (absolute_path);
+  return result;
+}
 
 /**
  * thunar_file_get_display_name:

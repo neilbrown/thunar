@@ -133,11 +133,33 @@ AC_CHECK_HEADERS([ctype.h errno.h fcntl.h grp.h limits.h locale.h memory.h \
                   sys/uio.h sys/wait.h time.h])
 
 dnl ************************************
+dnl *** try to find magic files      ***
+dnl ************************************
+
+AC_ARG_WITH(magic, 
+  AC_HELP_STRING([--with-magic], [support libmagic support to determine the type of a file]),
+  [],
+  [with_magic=no])
+
+LIBMAGIC =
+AS_IF([test "x$with_magic" != xno],
+  [AC_CHECK_LIB([magic], [main],
+  [AC_SUBST([LIBMAGIC], ["-lmagic"])
+   AC_DEFINE([HAVE_MAGIC_H], [1],
+             [Define if you have libmagic])
+  ],
+  [AC_MSG_FAILURE(
+    [--with-magic was given, but test for libmagic failed])],
+  [])])
+
+dnl ************************************
 dnl *** Check for standard functions ***
 dnl ************************************
 AC_FUNC_MMAP()
 AC_CHECK_FUNCS([localeconv mkdtemp pread pwrite sched_yield setgroupent \
                 setpassent strcoll strlcpy strptime symlink])
+
+
 
 dnl ******************************
 dnl *** Check for i18n support ***

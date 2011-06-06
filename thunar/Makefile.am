@@ -241,6 +241,7 @@ Thunar_CFLAGS =								\
 Thunar_LDFLAGS =							\
 	-no-undefined							\
 	$(LIBSM_LDFLAGS)						\
+	$(LIBMAGIC)							\
 	$(PLATFORM_LDFLAGS)
 
 Thunar_LDADD =								\

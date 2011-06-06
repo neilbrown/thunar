@@ -264,6 +264,9 @@ GList            *thunar_file_list_to_thunar_g_file_list    (GList *file_list);
 
 gboolean         thunar_file_is_desktop              (const ThunarFile *file);
 
+GdkPixbufFormat  *thunar_file_get_image_size       (const ThunarFile  *file,
+	                                            gint              *width,
+				                    gint              *height);
 /**
  * thunar_file_is_root:
  * @file : a #ThunarFile.

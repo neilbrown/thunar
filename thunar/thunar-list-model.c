@@ -2271,7 +2271,6 @@ thunar_list_model_get_statusbar_text (ThunarListModel *store,
   guint64      size_summary;
   GSList      *row;
   GList       *lp;
-  gchar       *absolute_path;
   gchar       *fspace_string;
   gchar       *display_name;
   gchar       *size_string;
@@ -2381,16 +2380,13 @@ thunar_list_model_get_statusbar_text (ThunarListModel *store,
       else if (thunar_file_is_local (file) && thunar_file_is_regular (file))
         {
           /* check if we can determine the dimension of this file (only for image files) */
-          absolute_path = g_file_get_path (thunar_file_get_file (file));
-          if (absolute_path != NULL
-              && gdk_pixbuf_get_file_info (absolute_path, &width, &height) != NULL)
+	    if (thunar_file_get_image_size(file, &width, &height) != NULL)
             {
-              /* append the image dimensions to the statusbar text */
-              s = g_strdup_printf ("%s, %s %dx%d", text, _("Image Size:"), width, height);
-              g_free (text);
-              text = s;
-            }
-          g_free (absolute_path);
+                  /* append the image dimensions to the statusbar text */
+                  s = g_strdup_printf ("%s, %s %dx%d", text, _("Image Size:"), width, height);
+                  g_free (text);
+                  text = s;
+              }
         }
     }
   else

@@ -28,6 +28,10 @@
 #include <stdlib.h>
 #endif
 
+#ifdef HAVE_MAGIC_H
+#include <magic.h>
+#endif
+
 #include <glib/gstdio.h>
 #ifdef HAVE_GIO_UNIX
 #include <gio/gdesktopappinfo.h>
@@ -54,7 +58,9 @@ static gchar   *opt_sm_client_id = NULL;
 static gboolean opt_quit = FALSE;
 static gboolean opt_version = FALSE;
 
-
+#ifdef HAVE_MAGIC_H
+magic_t magic_cookie;
+#endif
 
 /* --- command line options --- */
 static GOptionEntry option_entries[] =
@@ -199,6 +205,16 @@ main (int argc, char **argv)
   /* determine the current working directory */
   working_directory = g_get_current_dir ();
 
+#ifdef HAVE_MAGIC_H
+  magic_cookie = magic_open(MAGIC_MIME);
+  if (magic_cookie == NULL)
+      g_fprintf(stderr, "Thunar: unable to initialize magic library\n");
+  if (magic_load(magic_cookie, NULL) != 0) {
+      g_fprintf(stderr, "Thunar: unable to load magic database: %s\n", 
+              magic_error(magic_cookie));
+      magic_close(magic_cookie);
+  }
+#endif
   /* check if atleast one filename was specified, else
    * fall back to opening the current working directory
    * if daemon mode is not requested.
@@ -307,6 +323,9 @@ error0:
 #ifdef HAVE_LIBNOTIFY
   thunar_notify_uninit ();
 #endif
-
+  
+#ifdef HAVE_MAGIC_H
+  magic_close(magic_cookie);
+#endif
   return EXIT_SUCCESS;
 }

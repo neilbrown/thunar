@@ -621,6 +621,8 @@ thunar_file_get (GFile   *gfile,
     {
       /* take a reference for the caller */
       g_object_ref (file);
+      if (file->info == NULL)
+	      thunar_file_load (file, NULL, NULL);
     }
   else
     {

@@ -2433,12 +2433,13 @@ static void
 thunar_window_current_directory_destroy (ThunarFile   *current_directory,
                                          ThunarWindow *window)
 {
-
   _thunar_return_if_fail (THUNAR_IS_WINDOW (window));
   _thunar_return_if_fail (THUNAR_IS_FILE (current_directory));
   _thunar_return_if_fail (window->current_directory == current_directory);
 
-  thunar_history_current_directory_destroy (window->history, current_directory);
+  if (!thunar_history_current_directory_destroy (window->history, current_directory))
+    /* Nothing in history, close window */
+    gtk_widget_destroy(GTK_WIDGET(window));
 }
 
 
@@ -2577,10 +2578,12 @@ thunar_window_mount_pre_unmount (GVolumeMonitor *volume_monitor,
 
   /* check if the file is the current directory or an ancestor of the current directory */
   if (window->current_directory == file || thunar_file_is_ancestor (window->current_directory, file))
-    {
-      /* Find a suitable directory */
-      thunar_history_current_directory_destroy (window->history, file);
-    }
+   {
+     /* Find a suitable directory */
+     if (!thunar_history_current_directory_destroy (window->history,
+						    file))
+       gtk_widget_destroy(GTK_WIDGET(window));
+   }
 }
 
 

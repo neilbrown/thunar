@@ -586,6 +586,37 @@ thunar_preferences_dialog_init (ThunarPreferencesDialog *dialog)
 
   /* cleanup */
   g_free (path);
+
+  frame = g_object_new (GTK_TYPE_FRAME, "border-width", 0, "shadow-type", GTK_SHADOW_NONE, NULL);
+  gtk_box_pack_start (GTK_BOX (vbox), frame, FALSE, TRUE, 0);
+  gtk_widget_show (frame);
+
+  label = gtk_label_new (_("Behaviour on folder disappearing"));
+  gtk_label_set_attributes (GTK_LABEL(label), thunar_pango_attr_list_bold ());
+  gtk_frame_set_label_widget (GTK_FRAME (frame), label);
+  gtk_widget_show (label);
+
+  table = gtk_table_new (2, 2, FALSE);
+  gtk_table_set_row_spacings (GTK_TABLE (table), 6);
+  gtk_table_set_col_spacings (GTK_TABLE (table), 12);
+  gtk_container_set_border_width (GTK_CONTAINER (table), 12);
+  gtk_container_add (GTK_CONTAINER (frame), table);
+  gtk_widget_show (table);
+
+  label = gtk_label_new_with_mnemonic (_("When a folder disappears (is removed or\n"
+					 "unmounted), it can be replace by either the\n"
+					 "nearest remaining parent, or the previous folder\n"
+					 "from the history.  In the later case, if the\n"
+					 "history is empty, the window will be closed.\n"));
+    gtk_misc_set_alignment (GTK_MISC (label), 0.0f, 0.0f);
+  gtk_table_attach (GTK_TABLE (table), label, 0, 1, 0, 1, GTK_FILL, GTK_FILL, 0, 0);
+  gtk_widget_show (label);
+
+  button = gtk_check_button_new_with_mnemonic (_("Use history to replace missing folders"));
+  exo_mutual_binding_new (G_OBJECT (dialog->preferences), "misc-history-replacement", G_OBJECT (button), "active");
+  gtk_table_attach (GTK_TABLE (table), button, 0, 1, 1, 2, GTK_EXPAND | GTK_FILL, GTK_FILL, 0, 0);
+  gtk_widget_show (button);
+
 }
 
 

@@ -27,7 +27,7 @@
 #include <thunar/thunar-icon-factory.h>
 #include <thunar/thunar-navigator.h>
 #include <thunar/thunar-private.h>
-
+#include <thunar/thunar-preferences.h>
 
 
 /* Property identifiers */
@@ -631,17 +631,42 @@ thunar_history_peek_forward (ThunarHistory *history)
 }
 
 
-void
+gboolean
 thunar_history_current_directory_destroy (ThunarHistory *history,
 					  ThunarFile *unmounting)
 {
+  gboolean	misc_history_replacement;
+  ThunarPreferences *preferences = thunar_preferences_get ();
   ThunarFile *current_directory = history->current_directory;
   ThunarFile *new_directory = NULL;
   GError       *error = NULL;
 
-  _thunar_return_if_fail (THUNAR_IS_HISTORY (history));
+  _thunar_return_val_if_fail (THUNAR_IS_HISTORY (history), FALSE);
 
   history->current_directory = NULL;
+
+  g_object_get (G_OBJECT (preferences), "misc-history-replacement", &misc_history_replacement, NULL);
+  if (misc_history_replacement)
+   {
+     /* Discard current directory in favour of previous, if there
+      * is one, else next, else fail.
+      */
+     do
+      {
+	if (history->current_directory != NULL)
+	  g_object_unref (G_OBJECT(history->current_directory));
+	history->current_directory = NULL;
+	if (history->back_list)
+	   thunar_history_go_back(history, 1);
+	else if (history->forward_list)
+	   thunar_history_go_forward(history, 1);
+      }
+     while (history->current_directory != NULL &&
+	    unmounting != NULL &&
+	    thunar_file_is_ancestor (history->current_directory,
+				     unmounting));
+     return history->current_directory != NULL;
+   }
 
   if (current_directory != NULL)
    {
@@ -710,4 +735,5 @@ thunar_history_current_directory_destroy (ThunarHistory *history,
     history->current_directory = new_directory;
     thunar_navigator_change_directory (THUNAR_NAVIGATOR (history), new_directory);
   }
+  return 1;
 }

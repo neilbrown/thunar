@@ -69,6 +69,7 @@ enum
   PROP_LAST_WINDOW_WIDTH,
   PROP_LAST_WINDOW_FULLSCREEN,
   PROP_MISC_VOLUME_MANAGEMENT,
+  PROP_MISC_HISTORY_REPLACEMENT,
   PROP_MISC_CASE_SENSITIVE,
   PROP_MISC_DATE_STYLE,
   PROP_MISC_FOLDERS_FIRST,
@@ -427,6 +428,19 @@ thunar_preferences_class_init (ThunarPreferencesClass *klass)
                                                          "MiscVolumeManagement",
                                                          "misc-volume-management",
                                                          TRUE,
+                                                         EXO_PARAM_READWRITE));
+
+  /**
+   * ThunarPreferences:misc-history-replacement
+   *
+   * Whether to replace missing directories from history or parents.
+   **/
+  g_object_class_install_property (gobject_class,
+                                   PROP_MISC_HISTORY_REPLACEMENT,
+                                   g_param_spec_boolean ("misc-history-replacement",
+                                                         "MiscHistoryReplacement",
+                                                         "misc-history-replacement",
+                                                         FALSE,
                                                          EXO_PARAM_READWRITE));
 
   /**

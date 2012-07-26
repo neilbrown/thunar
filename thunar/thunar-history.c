@@ -619,3 +619,85 @@ thunar_history_peek_forward (ThunarHistory *history)
 
   return result;
 }
+
+
+void
+thunar_history_current_directory_destroy (ThunarHistory *history,
+					  ThunarFile *unmounting)
+{
+  ThunarFile *current_directory = history->current_directory;
+  ThunarFile *new_directory = NULL;
+  GError       *error = NULL;
+
+  _thunar_return_if_fail (THUNAR_IS_HISTORY (history));
+
+  history->current_directory = NULL;
+
+  if (current_directory != NULL)
+   {
+     /* replace current directory by first parent which exists,
+      * else home
+      */
+     GFile      *path;
+     GFile      *tmp;
+     /* determine the path of the current directory */
+     path = g_object_ref (thunar_file_get_file (current_directory));
+
+     /* try to find a parent directory that still exists */
+     while (new_directory == NULL)
+      {
+	/* check whether the current directory exists */
+	if (g_file_query_exists (path, NULL))
+	 {
+	   /* it does, try to load the file */
+	   new_directory = thunar_file_get (path, NULL);
+
+	   /* fall back to $HOME if loading the file failed */
+	   if (new_directory == NULL)
+	     break;
+
+	   if (unmounting &&
+	       thunar_file_is_ancestor (new_directory, unmounting))
+	    {
+	      /* No, this one won't do */
+	      g_object_unref (new_directory);
+	      new_directory = NULL;
+	    }
+	 }
+	else
+	 {
+	   /* determine the parent of the directory */
+	   tmp = g_file_get_parent (path);
+
+	   /* if there's no parent this means that we've found no parent
+	    * that still exists at all. Fall back to $HOME then */
+	   if (tmp == NULL)
+	     break;
+
+	   /* free the old directory */
+	   g_object_unref (path);
+
+	   /* check the parent next */
+	   path = tmp;
+	 }
+      }
+
+     /* make sure we don't leak */
+     if (path != NULL)
+       g_object_unref (path);
+     g_object_unref (G_OBJECT(current_directory));
+
+   }
+  if (new_directory == NULL)
+  {
+    new_directory = thunar_file_get (thunar_g_file_new_for_home (),
+				     &error);
+    g_clear_error (&error);
+  }
+  /* check if we have a new folder */
+  if (G_LIKELY (new_directory != NULL)) {
+    /* enter the new folder */
+    history->current_directory = new_directory;
+    thunar_navigator_change_directory (THUNAR_NAVIGATOR (history), new_directory);
+  }
+}

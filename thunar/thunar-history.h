@@ -43,6 +43,7 @@ void            thunar_history_set_action_group (ThunarHistory       *history,
                                                  GtkActionGroup      *action_group);
 ThunarFile     *thunar_history_peek_back        (ThunarHistory       *history);
 ThunarFile     *thunar_history_peek_forward     (ThunarHistory       *history);
+void            thunar_history_current_directory_destroy (ThunarHistory *history, ThunarFile *unmounting);
 
 G_END_DECLS;
 

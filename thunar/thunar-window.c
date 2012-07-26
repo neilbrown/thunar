@@ -2433,66 +2433,12 @@ static void
 thunar_window_current_directory_destroy (ThunarFile   *current_directory,
                                          ThunarWindow *window)
 {
-  ThunarFile *new_directory = NULL;
-  GFile      *path;
-  GFile      *tmp;
 
   _thunar_return_if_fail (THUNAR_IS_WINDOW (window));
   _thunar_return_if_fail (THUNAR_IS_FILE (current_directory));
   _thunar_return_if_fail (window->current_directory == current_directory);
 
-  /* determine the path of the current directory */
-  path = g_object_ref (thunar_file_get_file (current_directory));
-
-  /* try to find a parent directory that still exists */
-  while (new_directory == NULL)
-    {
-      /* check whether the current directory exists */
-      if (g_file_query_exists (path, NULL))
-        {
-          /* it does, try to load the file */
-          new_directory = thunar_file_get (path, NULL);
-
-          /* fall back to $HOME if loading the file failed */
-          if (new_directory == NULL)
-            break;
-        }
-      else
-        {
-          /* determine the parent of the directory */
-          tmp = g_file_get_parent (path);
-          
-          /* if there's no parent this means that we've found no parent
-           * that still exists at all. Fall back to $HOME then */
-          if (tmp == NULL)
-            break;
-
-          /* free the old directory */
-          g_object_unref (path);
-
-          /* check the parent next */
-          path = tmp;
-        }
-    }
-
-  /* make sure we don't leak */
-  if (path != NULL)
-    g_object_unref (path);
-
-  /* check if we have a new folder */
-  if (G_LIKELY (new_directory != NULL))
-    {
-      /* enter the new folder */
-      thunar_window_set_current_directory (window, new_directory);
-
-      /* release the file reference */
-      g_object_unref (new_directory);
-    }
-  else
-    {
-      /* enter the home folder */
-      thunar_window_action_open_home (NULL, window);
-    }
+  thunar_history_current_directory_destroy (window->history, current_directory);
 }
 
 
@@ -2610,7 +2556,6 @@ thunar_window_mount_pre_unmount (GVolumeMonitor *volume_monitor,
                                  ThunarWindow   *window)
 {
   ThunarFile *file;
-  GtkAction  *action;
   GFile      *mount_point;
 
   _thunar_return_if_fail (G_IS_VOLUME_MONITOR (volume_monitor));
@@ -2633,10 +2578,8 @@ thunar_window_mount_pre_unmount (GVolumeMonitor *volume_monitor,
   /* check if the file is the current directory or an ancestor of the current directory */
   if (window->current_directory == file || thunar_file_is_ancestor (window->current_directory, file))
     {
-      /* change to the home folder */
-      action = gtk_action_group_get_action (window->action_group, "open-home");
-      if (G_LIKELY (action != NULL))
-        gtk_action_activate (action);
+      /* Find a suitable directory */
+      thunar_history_current_directory_destroy (window->history, file);
     }
 }
 

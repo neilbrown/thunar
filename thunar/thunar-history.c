@@ -325,7 +325,12 @@ thunar_history_go_back (ThunarHistory *history,
 
   /* tell the other modules to change the current directory */
   if (G_LIKELY (history->current_directory != NULL))
-    thunar_navigator_change_directory (THUNAR_NAVIGATOR (history), history->current_directory);
+   {
+     if (g_file_query_exists (thunar_file_get_file (history->current_directory), NULL))
+       thunar_navigator_change_directory (THUNAR_NAVIGATOR (history), history->current_directory);
+     else
+       thunar_history_current_directory_destroy (history, NULL);
+   }
 
   /* update the sensitivity of the actions */
   gtk_action_set_sensitive (history->action_back, (history->back_list != NULL));
@@ -355,7 +360,12 @@ thunar_history_go_forward (ThunarHistory *history,
 
   /* tell the other modules to change the current directory */
   if (G_LIKELY (history->current_directory != NULL))
-    thunar_navigator_change_directory (THUNAR_NAVIGATOR (history), history->current_directory);
+   {
+     if (g_file_query_exists (thunar_file_get_file (history->current_directory), NULL))
+       thunar_navigator_change_directory (THUNAR_NAVIGATOR (history), history->current_directory);
+     else
+       thunar_history_current_directory_destroy (history, NULL);
+   }
 
   /* update the sensitivity of the actions */
   gtk_action_set_sensitive (history->action_back, (history->back_list != NULL));
